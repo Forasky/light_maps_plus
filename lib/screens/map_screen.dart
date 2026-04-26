@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({required this.position, super.key});
@@ -13,19 +14,59 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+  final MapController mapController = MapController();
+
   @override
   Widget build(BuildContext context) {
-    return FlutterMap(
-      mapController: MapController(),
-      options: MapOptions(
-        initialCenter: LatLng(
-          widget.position.latitude,
-          widget.position.longitude,
+    return Stack(
+      children: [
+        FlutterMap(
+          mapController: mapController,
+          options: MapOptions(
+            initialCenter: LatLng(
+              widget.position.latitude,
+              widget.position.longitude,
+            ),
+            initialZoom: 13.0,
+            keepAlive: true,
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.example.light_maps_plus',
+            ),
+            RichAttributionWidget(
+              attributions: [
+                TextSourceAttribution(
+                  'OpenStreetMap contributors',
+                  onTap: () => launchUrl(
+                    Uri.parse('https://openstreetmap.org/copyright'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        initialZoom: 8,
-        keepAlive: true,
-      ),
-      children: [ElevatedButton(onPressed: () {}, child: Text('Refresh'))],
+        Positioned(
+          child: ElevatedButton(
+            onPressed: () => mapController.move(
+              mapController.camera.center,
+              mapController.camera.zoom + 1,
+            ),
+            child: Text('+'),
+          ),
+        ),
+        Positioned(
+          top: 50,
+          child: ElevatedButton(
+            onPressed: () => mapController.move(
+              mapController.camera.center,
+              mapController.camera.zoom - 1,
+            ),
+            child: Text('-'),
+          ),
+        ),
+      ],
     );
   }
 }
